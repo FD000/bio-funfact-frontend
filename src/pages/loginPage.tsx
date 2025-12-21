@@ -59,59 +59,80 @@ const SignInContainer = styled(Stack)(({ theme }) => ({
   },
 }));
 
-const LoginPage = (props: { disableCustomTheme?: boolean }) => {
+export interface Profile {
+  accountId: string;
+  accountName: string;
+  message: string;
+}
+
+
+interface LoginPageProps {
+  profile?: Profile | null;
+  login?: boolean;
+  setProfile?: (data: Profile) => void;
+  setLogin?: (data: any) => void;
+}
+
+const LoginPage = (props: LoginPageProps) => {
   const [emailError, setEmailError] = React.useState(false);
   const [emailErrorMessage, setEmailErrorMessage] = React.useState('');
   const [passwordError, setPasswordError] = React.useState(false);
+  const [emailInput, setEmail] = React.useState('');
+  const [passwordInput, setPassword] = React.useState('');
   const [passwordErrorMessage, setPasswordErrorMessage] = React.useState('');
-  const [open, setOpen] = React.useState(false);
 
-  const handleClickOpen = () => {
-    setOpen(true);
-  };
+const validateInputs = async () => {
+  const email = emailInput
+  const password = passwordInput;
 
-  const handleClose = () => {
-    setOpen(false);
-  };
+  console.log("email:", email);
+  console.log("password:", password);
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    if (emailError || passwordError) {
-      event.preventDefault();
-      return;
-    }
-    const data = new FormData(event.currentTarget);
-    console.log({
-      email: data.get('email'),
-      password: data.get('password'),
-    });
-  };
+  // Basic validation
+  if (!email || !password) {
+    console.log("Missing email or password");
+    return;
+  }
 
-  const validateInputs = () => {
-    const email = document.getElementById('email') as HTMLInputElement;
-    const password = document.getElementById('password') as HTMLInputElement;
+  try {
+    const response = await fetch(
+      "https://cloudrun-service-test-2-datastore-370938735160.us-central1.run.app/api/users/login",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          accountName: email, // or "Fetto" if hardcoded
+          password: password, // or "password" if hardcoded
+        }),
+      }
+    );
 
-    let isValid = true;
+    console.log("Response status:", response.status);
 
-    if (!email.value || !/\S+@\S+\.\S+/.test(email.value)) {
-      setEmailError(true);
-      setEmailErrorMessage('Please enter a valid email address.');
-      isValid = false;
-    } else {
-      setEmailError(false);
-      setEmailErrorMessage('');
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    if (!password.value || password.value.length < 6) {
-      setPasswordError(true);
-      setPasswordErrorMessage('Password must be at least 6 characters long.');
-      isValid = false;
-    } else {
-      setPasswordError(false);
-      setPasswordErrorMessage('');
-    }
+    const data = await response.json();
+    console.log("Login response data:", data);
 
-    return isValid;
-  };
+    // Store data in state
+    props.setProfile?.(data);
+    props.setLogin?.(false);
+
+  } catch (err) {
+    console.error("Login failed:", err);
+  }
+};
+
+// Then call it from your handleSubmit
+const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  event.preventDefault(); // prevent default form submission
+  await validateInputs();  // call the async function
+};
+
 
   return (
     <AppTheme {...props}>
@@ -153,6 +174,7 @@ const LoginPage = (props: { disableCustomTheme?: boolean }) => {
                 fullWidth
                 variant="outlined"
                 color={emailError ? 'error' : 'primary'}
+                onChange={(e) => setEmail(e.target.value)}
               />
             </FormControl>
             <FormControl>
@@ -170,6 +192,7 @@ const LoginPage = (props: { disableCustomTheme?: boolean }) => {
                 fullWidth
                 variant="outlined"
                 color={passwordError ? 'error' : 'primary'}
+                onChange={(e) => setPassword(e.target.value)}
               />
             </FormControl>
             <FormControlLabel
@@ -180,7 +203,7 @@ const LoginPage = (props: { disableCustomTheme?: boolean }) => {
               type="submit"
               fullWidth
               variant="contained"
-              onClick={validateInputs}
+              /* onClick={validateInputs} */
             >
               Sign in
             </Button>

@@ -14,13 +14,9 @@ import Stack from '@mui/material/Stack';
 import MuiCard from '@mui/material/Card';
 import { styled } from '@mui/material/styles';
 import AppTheme from './Themes/AppTheme';
-import FormContainer from './FormContainer';
-import ProfilePage from './ProfilePage';
 /* import ColorModeSelect from '../shared-theme/ColorModeSelect';
 import { GoogleIcon, FacebookIcon, SitemarkIcon } from './components/CustomIcons'; */
 
-
-/* FLYTTA SEN ALLA STYLED COMPONENTS I EN FIL */
 const Card = styled(MuiCard)(({ theme }) => ({
   display: 'flex',
   flexDirection: 'column',
@@ -63,61 +59,12 @@ const SignInContainer = styled(Stack)(({ theme }) => ({
   },
 }));
 
-interface Profile {
-  accountId: string;
-  accountName: string;
-  message: string;
-}
-
-
-interface LandingPageProps {
-  disableCustomTheme?: boolean;
-  profile?: Profile | null;
-}
-
-const LandingPage = (props: LandingPageProps) => {
+const FormContainer = (props: { disableCustomTheme?: boolean }) => {
   const [emailError, setEmailError] = React.useState(false);
-  const [importedProfile, setImportedProfile] = React.useState([]);
   const [emailErrorMessage, setEmailErrorMessage] = React.useState('');
   const [passwordError, setPasswordError] = React.useState(false);
   const [passwordErrorMessage, setPasswordErrorMessage] = React.useState('');
   const [open, setOpen] = React.useState(false);
-
-  console.log("MYYY LANDING PROOFIEL:", props.profile?.accountId);
-
-React.useEffect(() => {
-  console.log("Fetching users...");
-
-  const fetchUsers = async () => {
-    try {
-      const response = await fetch(
-        `https://cloudrun-service-test-2-datastore-370938735160.us-central1.run.app/api/persons/${props.profile?.accountId}`
-      );
-
-      console.log("Response status:", response.status);
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log("Fetched data:", data); // <--- see what really comes back
-
-      setImportedProfile(data);
-      console.log("Imported Profile:", importedProfile);
-      console.log("State set, importedProfile:", data);
-    } catch (err) {
-      console.error("Failed to fetch users:", err);
-    }
-  };
-
-  fetchUsers();
-}, []);
-
-React.useEffect(() => {
-  console.log("Imported Profile updated:", importedProfile);
-}, [importedProfile]);
-
 
   const handleClickOpen = () => {
     setOpen(true);
@@ -166,20 +113,77 @@ React.useEffect(() => {
     return isValid;
   };
 
-  
-
   return (
-    <AppTheme {...props}>
-      <CssBaseline enableColorScheme />
-      <SignInContainer direction="column" justifyContent="space-between">
-        {/* <ColorModeSelect sx={{ position: 'fixed', top: '1rem', right: '1rem' }} /> */}
-        <Card variant="outlined">
-          {/* <SitemarkIcon /> */}
-            <ProfilePage importedProfile={importedProfile} />
-        </Card>
-      </SignInContainer>
-    </AppTheme>
+    <div>
+      {/* <SitemarkIcon /> */}
+      <Typography
+        component="h1"
+        variant="h4"
+        sx={{ width: '100%', fontSize: 'clamp(2rem, 10vw, 2.15rem)' }}
+      >
+        Sign in
+      </Typography>
+      <Box
+        component="form"
+        onSubmit={handleSubmit}
+        noValidate
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          width: '100%',
+          gap: 2,
+        }}
+      >
+        <FormControl>
+          <FormLabel htmlFor="email">Email</FormLabel>
+          <TextField
+            error={emailError}
+            helperText={emailErrorMessage}
+            id="email"
+            type="email"
+            name="email"
+            placeholder="your@email.com"
+            autoComplete="email"
+            autoFocus
+            required
+            fullWidth
+            variant="outlined"
+            color={emailError ? 'error' : 'primary'}
+          />
+        </FormControl>
+        <FormControl>
+          <FormLabel htmlFor="password">Password</FormLabel>
+          <TextField
+            error={passwordError}
+            helperText={passwordErrorMessage}
+            name="password"
+            placeholder="••••••"
+            type="password"
+            id="password"
+            autoComplete="current-password"
+            autoFocus
+            required
+            fullWidth
+            variant="outlined"
+            color={passwordError ? 'error' : 'primary'}
+          />
+        </FormControl>
+        <FormControlLabel
+          control={<Checkbox value="remember" color="primary" />}
+          label="Remember me"
+        />
+        <Button
+          type="submit"
+          fullWidth
+          variant="contained"
+          onClick={validateInputs}
+        >
+          Sign in
+        </Button>
+      </Box>
+    </div>
+
   );
 }
 
-export default LandingPage;
+export default FormContainer;
